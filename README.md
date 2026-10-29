@@ -281,6 +281,13 @@ stale cache. The icons are rendered from `static/icon.svg` with ImageMagick
   first and last tap times are kept.
 - Counts per team are shown on each callout card. Closed callouts stay in
   the history list.
+- **Two callouts at once.** A member who is Acknowledged, En route or On
+  scene on one open callout is spoken for: on any other open callout their
+  line is tagged with where they are (`on scene @ Barricade Elm St`), their
+  row cannot be held to set a status, their own buttons are greyed out, and
+  the server refuses a status for them there. Clearing them (or marking them
+  Unavailable / Not contacted) on the first callout frees them for the
+  second. The counts on each callout still describe that callout only.
 - **Live updates without reloading.** While a callout is open, the home page
   and the callout page poll a version number (the id of the last event, a few
   bytes) every 10 seconds and whenever the app comes back to the foreground.

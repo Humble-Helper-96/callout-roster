@@ -32,6 +32,9 @@ SELF_STATUSES = ("acknowledged", "en_route", "on_scene", "cleared", "unavailable
 DEFAULT_STATUS = "not_contacted"
 # Statuses that count as "coming" for the team tallies and the TAK marker.
 COMING = ("acknowledged", "en_route", "on_scene")
+# While a member holds one of these on an open callout they are spoken for: no other
+# callout may set their status until they are cleared (or unavailable) on the first.
+COMMITTED = COMING
 ETA_CHOICES = (90, 60, 45, 30, 15, 5)
 CONFIRMATIONS = {
     "not_contacted": "Marked not contacted.",
@@ -215,16 +218,39 @@ def set_brief(db, unit, callout, actor: str, brief: str):
     return callout
 
 
+def committed_elsewhere(db, unit_id: int, callout_id: int) -> dict:
+    """{roster_id: {'callout_id', 'label', 'status'}} for members who are acknowledged,
+    en route or on scene on a different open callout of this unit."""
+    rows = db.execute(
+        """
+        SELECT resp.roster_id, c.id AS callout_id, c.label, resp.status
+        FROM responses resp JOIN callouts c ON c.id = resp.callout_id
+        WHERE c.unit_id = ? AND c.closed_at IS NULL AND c.id != ? AND resp.status IN (?, ?, ?)
+        ORDER BY resp.last_at DESC
+        """,
+        (unit_id, callout_id, *COMMITTED),
+    ).fetchall()
+    out: dict = {}
+    for r in rows:
+        out.setdefault(r["roster_id"], {"callout_id": r["callout_id"], "label": r["label"], "status": r["status"]})
+    return out
+
+
 def respond(db, unit, callout, roster_row, status: str, actor: str):
     """One tap, by the member or by a lead on their behalf.
 
     A later tap replaces the status; first and last tap times are kept, and
     ``set_by`` records who did it so a lead's phone-list marks are visible.
+    A member committed to another open callout cannot be set here at all.
     """
     if status not in STATUSES:
         raise CalloutError("Unknown status.")
     if callout["closed_at"]:
         raise CalloutError("That callout has closed.")
+    other = committed_elsewhere(db, unit["id"], callout["id"]).get(roster_row["id"])
+    if other:
+        raise CalloutError(f"{roster_row['position']} is {STATUSES[other['status']].lower()} at "
+                           f"\u201c{other['label']}\u201d. Clear them there first.")
     now = to_iso(utcnow())
     with transaction(db):
         # An ETA only makes sense while en route; any other status clears it.

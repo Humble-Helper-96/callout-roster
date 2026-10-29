@@ -31,20 +31,23 @@
 
 {% if not callout.closed_at %}
   {% if my_rows %}
-    {% for r in my_rows %}{% set resp = responses.get(r.id) %}
-    <section class="card me-card">
+    {% for r in my_rows %}{% set resp = responses.get(r.id) %}{% set other = elsewhere.get(r.id) %}
+    <section class="card me-card{% if other %} locked{% endif %}">
       <div class="me-head">
         <span class="field-label">Your status</span>
         <span class="pos">{{ r.position }}</span>
         {% if resp %}{{ status_badge(resp.status) }}{% endif %}
       </div>
+      {% if other %}
+      <p class="eta-line mono">You are <b>{{ STATUSES[other.status]|lower }}</b> at <a href="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ other.callout_id) }}">{{ other.label }}</a>. Clear there to respond here.</p>
+      {% endif %}
       {% if resp and resp.status == 'en_route' %}
       <p class="eta-line mono">{% if resp.eta_at %}ETA <b>{{ resp.eta_at|localtime }}</b> ({{ resp.eta_at|until }}){% else %}No ETA given{% endif %} · <a href="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id, eta='me') }}">change</a></p>
       {% endif %}
       <form method="post" action="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id ~ '/respond') }}" class="status-buttons five">
         {{ csrf() }}<input type="hidden" name="roster_id" value="{{ r.id }}">
         {% for key in SELF_STATUSES %}{% set label = STATUSES[key] %}
-        <button type="submit" name="status" value="{{ key }}" class="status-btn {{ STATUS_TONES[key] }}{% if resp and resp.status == key %} current{% endif %}" aria-pressed="{{ 'true' if resp and resp.status == key else 'false' }}">{{ label }}</button>
+        <button type="submit" name="status" value="{{ key }}" class="status-btn {{ STATUS_TONES[key] }}{% if resp and resp.status == key %} current{% endif %}" aria-pressed="{{ 'true' if resp and resp.status == key else 'false' }}"{% if other %} disabled{% endif %}>{{ label }}</button>
         {% endfor %}
       </form>
     </section>
@@ -65,14 +68,14 @@
   </h3>
   {% if members %}
   <ul class="resp-list">
-    {% for r in members %}{% set resp = responses.get(r.id) %}
-    <li id="row-{{ r.id }}" class="resp-row{% if can_mark %} markable{% endif %}{% if r.tak_username and r.tak_username|lower == user.username|lower %} me{% endif %}{% if not resp or resp.status == DEFAULT_STATUS %} quiet{% endif %}" data-state="{{ resp.status if resp else DEFAULT_STATUS }}"{% if can_mark %} data-roster-id="{{ r.id }}" data-name="{{ r.position }} {{ r.name }}" data-status="{{ resp.status if resp else DEFAULT_STATUS }}"{% endif %}>
+    {% for r in members %}{% set resp = responses.get(r.id) %}{% set other = elsewhere.get(r.id) %}
+    <li id="row-{{ r.id }}" class="resp-row{% if can_mark and not other %} markable{% endif %}{% if other %} elsewhere{% endif %}{% if r.tak_username and r.tak_username|lower == user.username|lower %} me{% endif %}{% if not resp or resp.status == DEFAULT_STATUS %} quiet{% endif %}" data-state="{{ resp.status if resp else DEFAULT_STATUS }}"{% if can_mark %} data-roster-id="{{ r.id }}" data-name="{{ r.position }} {{ r.name }}" data-status="{{ resp.status if resp else DEFAULT_STATUS }}"{% endif %}>
       <span class="pos">{{ r.position }}</span>
       <span class="who"><span class="name">{{ r.name }}</span>{% if r.role %}<span class="role">{{ r.role }}</span>{% endif %}</span>
       <span class="state">
         <span class="slot slot-status">{{ status_badge(resp.status if resp else DEFAULT_STATUS) }}</span>
         {# Always rendered so the ETA is in the same place on every line; blank when there is none. #}
-        <span class="slot slot-eta mono">{% if resp and resp.status == 'en_route' and resp.eta_at %}ETA {{ resp.eta_at|clock }} ({{ resp.eta_at|until }}){% endif %}</span>
+        <span class="slot slot-eta mono">{% if other %}{{ STATUSES[other.status]|lower }} @ {{ other.label }}{% elif resp and resp.status == 'en_route' and resp.eta_at %}ETA {{ resp.eta_at|clock }} ({{ resp.eta_at|until }}){% endif %}</span>
       </span>
       {# Call is always in the same place: live with a number, greyed out without one. #}
       {% if r.work_phone %}<a class="call small" href="{{ r.work_phone|tel }}" aria-label="Call {{ r.name or r.position }}">Call</a>{% else %}<span class="call small off" aria-disabled="true" title="No phone number on file">Call</span>{% endif %}

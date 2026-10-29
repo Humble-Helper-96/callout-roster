@@ -137,6 +137,7 @@ def callout_detail(cid):
         total=counts["total"],
         my_rows=[r for r in rows if _is_me(r)],
         responses=responses,
+        elsewhere=co.committed_elsewhere(db, g.unit["id"], cid) if not callout["closed_at"] else {},
         eta_row=_eta_row(rows, responses),
         can_mark=not callout["closed_at"],
         can_export=True,

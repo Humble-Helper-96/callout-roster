@@ -807,3 +807,33 @@ def test_live_version_moves_with_every_change(client, app):
     assert "data-live-url" not in client.get(f"/u/swat/callouts/{cid}", headers=MEMBER).data.decode()
     assert client.get(f"/u/swat/callouts/{cid}/version", headers=OUTSIDER).status_code in (302, 403)
     assert client.get(f"/u/swat/callouts/999/version", headers=MEMBER).status_code == 404
+
+
+def test_member_committed_on_one_callout_is_locked_on_the_other(client, app):
+    add_row(client, app)
+    add_row(client, app, position="D-20", username="u10020", name="Other Person")
+    assert open_callout(client, "Alpha").status_code == 302
+    assert open_callout(client, "Bravo").status_code == 302
+    bravo, alpha = re.findall(r"callouts/(\d+)", client.get("/u/swat/", headers=MEMBER).data.decode())[:2]
+    rid = row_id(client)
+    post(client, f"/u/swat/callouts/{alpha}/respond", MEMBER, roster_id=rid, status="en_route")
+
+    html = client.get(f"/u/swat/callouts/{bravo}", headers=MEMBER).data.decode()
+    row = re.search(r"<li[^>]*>(?:(?!</li>).)*Test Member(?:(?!</li>).)*</li>", html, re.S).group(0)
+    assert "elsewhere" in row and "en route @ Alpha" in row and "markable" not in row
+    card = html[html.index("Your status"):html.index('id="teams"')]
+    assert "at <a" in card and "Alpha" in card and card.count("disabled") == 5
+    # Neither the member nor a lead can set a status on Bravo while committed to Alpha.
+    r = post(client, f"/u/swat/callouts/{bravo}/respond", MEMBER, roster_id=rid, status="acknowledged")
+    assert r.status_code == 302 and "Clear+them+there+first" in r.headers["Location"]
+    post(client, f"/u/swat/callouts/{bravo}/status", ADMIN, roster_id=rid, status="on_scene")
+    assert '<b>2</b> not contacted' in client.get(f"/u/swat/callouts/{bravo}", headers=MEMBER).data.decode()
+    # The other person, not contacted on Alpha, is free on Bravo.
+    post(client, f"/u/swat/callouts/{bravo}/status", ADMIN, roster_id=row_id(client, "D-20"), status="acknowledged")
+    assert '<b>1</b> not contacted' in client.get(f"/u/swat/callouts/{bravo}", headers=MEMBER).data.decode()
+    # Cleared on Alpha frees the member for Bravo.
+    post(client, f"/u/swat/callouts/{alpha}/respond", MEMBER, roster_id=rid, status="cleared")
+    html = client.get(f"/u/swat/callouts/{bravo}", headers=MEMBER).data.decode()
+    assert "@ Alpha" not in html and "disabled" not in html[html.index("Your status"):html.index('id="teams"')]
+    post(client, f"/u/swat/callouts/{bravo}/respond", MEMBER, roster_id=rid, status="acknowledged")
+    assert '<b>0</b> not contacted' in client.get(f"/u/swat/callouts/{bravo}", headers=MEMBER).data.decode()

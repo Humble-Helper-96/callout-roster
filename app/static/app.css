@@ -136,6 +136,10 @@
 .resp-row .slot { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:.75rem; letter-spacing:.06em; }
 .resp-row .slot-status .badge { display:block; text-align:center; width:100%; box-sizing:border-box; }
 .resp-row .slot-eta { color:var(--accent); font-variant-numeric:tabular-nums; }
+/* Spoken for on another open callout: tagged in the ETA slot, cannot be marked here. */
+.resp-row.elsewhere .slot-eta { color:var(--warn); }
+.resp-row.elsewhere .name { color:var(--muted); }
+.status-btn:disabled, .me-card.locked .status-btn { color:var(--border-strong); border-color:var(--border); border-style:dashed; cursor:default; pointer-events:none; background:transparent; box-shadow:none; }
 .resp-row .call { grid-area:call; align-self:center; }
 .resp-row.markable { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; cursor:pointer; transition:background var(--t-fast); }
 .resp-row.markable.pressing { background:rgb(0 180 216 / .12); }
