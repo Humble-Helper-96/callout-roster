@@ -1,0 +1,24 @@
+{% macro csrf() -%}<input type="hidden" name="_csrf" value="{{ csrf_token() }}">{%- endmacro %}
+
+{% macro badge(text, tone='accent') -%}<span class="badge {{ tone }}">{{ text }}</span>{%- endmacro %}
+
+{% macro status_badge(status) -%}{{ badge(STATUSES.get(status, status), STATUS_TONES.get(status, 'muted')) }}{%- endmacro %}
+
+{% macro post_button(action, label, cls='btn', confirm=None, fields={}) -%}
+<form method="post" action="{{ action }}" class="inline"{% if confirm %} data-confirm="{{ confirm }}"{% endif %}>
+  {{ csrf() }}{% for k, v in fields.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+  <button type="submit" class="{{ cls }}">{{ label }}</button>
+</form>
+{%- endmacro %}
+
+{% macro field(name, label, value='', type='text', placeholder='', required=False, hint='', attrs='') -%}
+<label class="field">
+  <span class="field-label">{{ label }}</span>
+  <input class="input" type="{{ type }}" name="{{ name }}" value="{{ value }}"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}{% if required %} required{% endif %} {{ attrs|safe }}>
+  {% if hint %}<span class="field-hint">{{ hint }}</span>{% endif %}
+</label>
+{%- endmacro %}
+
+{% macro location_meta(c) -%}
+{% if c.location_label or c.lat is not none %}<span class="loc">📍 {% if c.location_label %}{{ c.location_label }}{% endif %}{% if c.lat is not none %} <span class="muted">{{ '%.5f'|format(c.lat) }}, {{ '%.5f'|format(c.lon) }}</span>{% endif %}</span>{% endif %}
+{%- endmacro %}

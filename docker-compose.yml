@@ -1,0 +1,28 @@
+services:
+  callout-roster:
+    build: .
+    image: callout-roster:latest
+    container_name: callout-roster
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATA_DIR: /data
+    # Published on loopback only. The reverse proxy (Caddy on the host) reaches it at 127.0.0.1:${HOST_PORT}; nothing else can.
+    # Docker-published ports bypass host firewalls such as UFW, so never
+    # publish on 0.0.0.0 here: the app trusts the identity headers it is sent.
+    ports:
+      - "127.0.0.1:${HOST_PORT:-8080}:${PORT:-8080}"
+    volumes:
+      - roster-data:/data
+    # If the proxy runs in a container instead, drop the `ports:` block and
+    # attach this service to the proxy's Docker network:
+    # networks: [proxy]
+
+volumes:
+  roster-data:
+
+# networks:
+#   proxy:
+#     external: true

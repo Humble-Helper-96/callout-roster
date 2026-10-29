@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, badge, status_badge, field, location_meta %}
+{% block title %}{{ unit.name }} · {{ callout.label }}{% endblock %}
+{% block body_attrs %}{% if not callout.closed_at %} data-live-url="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id ~ '/version') }}" data-live-poll="10" data-version="{{ version }}"{% endif %}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow"><a href="{{ rel('u/' ~ unit.slug ~ '/') }}">← Callouts</a></p>
+  <h1>{{ callout.label }}</h1>
+  <p class="subtitle" data-live="meta">
+    {% if callout.closed_at %}{{ badge('Expired' if callout.close_reason == 'expired' else 'Closed', 'muted') }} {{ callout.closed_at|localtime }}{% else %}{{ badge('Active', 'green') }} auto-closes in <b>{{ callout.expires_at|remaining }}</b>{% endif %}
+    · opened {{ callout.opened_at|localtime }} by {{ callout.opened_by }}
+  </p>
+  <p class="subtitle" data-live="location">{% if callout.location_label or callout.lat is not none %}{{ location_meta(callout) }}{% endif %}</p>
+</section>
+
+{% if callout.brief or (can_manage and not callout.closed_at) %}
+<section class="card brief{% if can_manage and not callout.closed_at %} editable{% endif %}" id="brief" {% if can_manage and not callout.closed_at %}data-editable{% endif %}>
+  <div class="me-head"><span class="field-label">Tactical brief</span>{% if can_manage and not callout.closed_at %}<span class="mono muted small">hold to edit</span>{% endif %}</div>
+  <div data-live="brief">{% if callout.brief %}<p class="brief-text clamped">{{ callout.brief }}</p><button type="button" class="brief-more" hidden aria-expanded="false">Show all</button>{% else %}<p class="brief-text muted">No brief yet.</p>{% endif %}</div>
+</section>
+{% endif %}
+
+{# The glance strip: the leader's numbers, each a filter for the list below. #}
+<div class="glance" role="group" aria-label="Filter members" data-live="glance">
+  <button type="button" class="chip muted" data-filter="not_contacted"><b>{{ total.not_contacted }}</b> not contacted</button>
+  <button type="button" class="chip muted" data-filter="no_reply"><b>{{ total.no_reply }}</b> no reply</button>
+  <button type="button" class="chip accent" data-filter="coming"><b>{{ total.coming }}</b>/{{ total.active }} coming</button>
+  <button type="button" class="chip green" data-filter="on_scene"><b>{{ total.on_scene }}</b> on scene</button>
+  <button type="button" class="chip danger" data-filter="unavailable"><b>{{ total.unavailable }}</b> out</button>
+</div>
+
+{% if not callout.closed_at %}
+  {% if my_rows %}
+    {% for r in my_rows %}{% set resp = responses.get(r.id) %}
+    <section class="card me-card">
+      <div class="me-head">
+        <span class="field-label">Your status</span>
+        <span class="pos">{{ r.position }}</span>
+        {% if resp %}{{ status_badge(resp.status) }}{% endif %}
+      </div>
+      {% if ask_eta and resp and resp.status == 'en_route' %}
+      <form method="post" action="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id ~ '/eta') }}" class="eta-form">
+        {{ csrf() }}<input type="hidden" name="roster_id" value="{{ r.id }}">
+        <p class="eta-ask">You are en route. How long until you arrive?</p>
+        <div class="eta-chips">
+          {% for m in eta_choices %}<button type="submit" name="minutes" value="{{ m }}" class="btn">{{ m }} min</button>{% endfor %}
+          <button type="submit" name="minutes" value="0" class="btn muted-btn">Skip</button>
+        </div>
+      </form>
+      {% else %}
+      {% if resp and resp.status == 'en_route' %}
+      <p class="eta-line mono">{% if resp.eta_at %}ETA <b>{{ resp.eta_at|localtime }}</b> ({{ resp.eta_at|until }}){% else %}No ETA given{% endif %} · <a href="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id, eta='me') }}">change</a></p>
+      {% endif %}
+      <form method="post" action="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id ~ '/respond') }}" class="status-buttons five">
+        {{ csrf() }}<input type="hidden" name="roster_id" value="{{ r.id }}">
+        {% for key in SELF_STATUSES %}{% set label = STATUSES[key] %}
+        <button type="submit" name="status" value="{{ key }}" class="status-btn {{ STATUS_TONES[key] }}{% if resp and resp.status == key %} current{% endif %}" aria-pressed="{{ 'true' if resp and resp.status == key else 'false' }}">{{ label }}</button>
+        {% endfor %}
+      </form>
+      {% endif %}
+    </section>
+    {% endfor %}
+  {% else %}
+    <div class="callout warn"><span class="callout-icon" aria-hidden="true">!</span><div>You are not on this roster as <span class="mono">{{ user.username }}</span>, so you cannot respond. A unit admin can put that username on your row.</div></div>
+  {% endif %}
+{% endif %}
+
+<h2 class="plain-title" id="teams">Teams{% if can_mark %} <span class="mono muted mark-hint">hold a row to set a status</span>{% endif %}</h2>
+<p class="filter-note muted small" hidden>Showing <b id="filter-label"></b> only · <button type="button" class="link-btn" data-filter="all">show everyone</button></p>
+<div data-live="teams">
+{% for team, members, tc in by_team %}
+<section class="resp-group">
+  <h3 class="resp-head team-colored"{% if team and team.color %} style="--team:{{ team.color }}"{% endif %}>
+    <span>{{ team.name if team else 'Unassigned' }}</span>
+    <span class="mono">{% if tc %}{{ tc.coming }}/{{ tc.active }} coming{% if tc.not_contacted %} · {{ tc.not_contacted }} not contacted{% endif %}{% endif %}</span>
+  </h3>
+  {% if members %}
+  <ul class="resp-list">
+    {% for r in members %}{% set resp = responses.get(r.id) %}
+    <li id="row-{{ r.id }}" class="resp-row{% if can_mark %} markable{% endif %}{% if r.tak_username and r.tak_username|lower == user.username|lower %} me{% endif %}{% if not resp or resp.status == DEFAULT_STATUS %} quiet{% endif %}" data-state="{{ resp.status if resp else DEFAULT_STATUS }}"{% if can_mark %} data-roster-id="{{ r.id }}" data-name="{{ r.position }} {{ r.name }}" data-status="{{ resp.status if resp else DEFAULT_STATUS }}"{% endif %}>
+      <span class="pos">{{ r.position }}</span>
+      <span class="who"><span class="name">{{ r.name }}</span>{% if r.role %}<span class="role">{{ r.role }}</span>{% endif %}</span>
+      <span class="state">
+        <span class="slot slot-status">{{ status_badge(resp.status if resp else DEFAULT_STATUS) }}</span>
+        {# Always rendered so the ETA is in the same place on every line; blank when there is none. #}
+        <span class="slot slot-eta mono">{% if resp and resp.status == 'en_route' and resp.eta_at %}ETA {{ resp.eta_at|clock }} ({{ resp.eta_at|until }}){% endif %}</span>
+      </span>
+      {# Call is always in the same place: live with a number, greyed out without one. #}
+      {% if r.work_phone %}<a class="call small" href="{{ r.work_phone|tel }}" aria-label="Call {{ r.name or r.position }}">Call</a>{% else %}<span class="call small off" aria-disabled="true" title="No phone number on file">Call</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="resp-empty muted">Nobody on this team.</p>{% endif %}
+  <p class="resp-empty muted filter-empty" hidden>Nobody matching on this team.</p>
+</section>
+{% endfor %}
+</div>
+
+{% if can_manage and not callout.closed_at %}
+<details class="fold">
+  <summary>Manage this callout</summary>
+  <div class="card-actions">
+    <a class="btn" href="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id ~ '/record.pdf') }}">Export record (PDF)</a>
+    <form method="post" action="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id ~ '/extend') }}" class="inline">{{ csrf() }}<button class="btn" type="submit">Extend +{{ cfg.callout_extend_hours }}h</button></form>
+    <form method="post" action="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id ~ '/close') }}" class="inline" data-confirm="Close callout “{{ callout.label }}” now?">{{ csrf() }}<button class="btn-danger" type="submit">Close callout</button></form>
+  </div>
+  <form method="post" class="form-card" action="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id ~ '/location') }}">
+    {{ csrf() }}
+    <p class="field-label">Location</p>
+    <div class="geo-row"><button type="button" class="btn" id="geo-btn">Use my current location</button><span class="mono muted" id="geo-status" aria-live="polite"></span></div>
+    {{ field('coords', 'Coordinates', ('%s, %s'|format(callout.lat, callout.lon)) if callout.lat is not none else '', placeholder=coords_example, hint='Latitude, longitude. Copy from CloudTAK and paste as-is.', attrs='inputmode="decimal" id="coords" autocomplete="off"') }}
+    {{ field('location_label', 'Location label', callout.location_label or '', attrs='id="location_label" maxlength="80"') }}
+    <div class="form-actions"><button type="submit" class="btn">Update location</button></div>
+  </form>
+</details>
+{% endif %}
+
+{% if can_manage and not callout.closed_at %}
+<dialog id="brief-sheet" class="sheet" aria-labelledby="brief-title">
+  <form method="post" action="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id ~ '/brief') }}" class="sheet-body">
+    {{ csrf() }}
+    <div class="me-head"><span class="field-label" id="brief-title">Tactical brief</span></div>
+    <textarea class="input" name="brief" rows="8" maxlength="4000">{{ callout.brief }}</textarea>
+    <button type="submit" class="btn-primary">Save brief</button>
+    <button type="button" class="btn sheet-cancel" data-close>Close</button>
+  </form>
+</dialog>
+{% endif %}
+{% if eta_row %}
+<dialog id="eta-sheet" class="sheet" aria-labelledby="eta-title" open>
+  <form method="post" action="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id ~ '/eta') }}" class="sheet-body eta-form">
+    {{ csrf() }}<input type="hidden" name="roster_id" value="{{ eta_row.id }}">
+    <div class="me-head"><span class="field-label">ETA for</span><span class="pos" id="eta-title">{{ eta_row.position }} {{ eta_row.name }}</span></div>
+    <p class="eta-ask">En route. How long until they arrive?</p>
+    <div class="eta-chips">
+      {% for m in eta_choices %}<button type="submit" name="minutes" value="{{ m }}" class="btn">{{ m }} min</button>{% endfor %}
+      <button type="submit" name="minutes" value="0" class="btn muted-btn">Skip</button>
+    </div>
+  </form>
+</dialog>
+{% endif %}
+{% if can_mark %}
+<dialog id="mark-sheet" class="sheet" aria-labelledby="mark-title">
+  <form method="post" action="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id ~ '/status') }}" class="sheet-body">
+    {{ csrf() }}<input type="hidden" name="roster_id" id="mark-roster-id" value="">
+    <div class="me-head"><span class="field-label">Set status for</span><span class="pos" id="mark-title"></span></div>
+    <div class="status-buttons five">
+      {# Leads get every status, including the two that only make sense when marking someone else. #}
+      {% for key, label in STATUSES.items() %}<button type="submit" name="status" value="{{ key }}" class="status-btn {{ STATUS_TONES[key] }}" data-status="{{ key }}">{{ label }}</button>{% endfor %}
+    </div>
+    <button type="button" class="btn sheet-cancel" data-close>Close</button>
+  </form>
+</dialog>
+{% endif %}
+
+{% if can_export and callout.closed_at %}
+<p class="card-actions"><a class="btn" href="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id ~ '/record.pdf') }}">Export record (PDF)</a></p>
+{% endif %}
+
+<details class="fold">
+  <summary>Event log <span class="mono muted">{{ events|length }}</span></summary>
+  {% if events %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Time</th><th>Event</th><th>Who</th></tr></thead>
+    <tbody>{% for e in events %}<tr><td class="mono">{{ e.created_at|localtime }}</td><td class="mono">{{ e.type }}</td><td>{{ e.actor or '' }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="resp-empty muted">No events recorded.</p>{% endif %}
+</details>
+{% endblock %}

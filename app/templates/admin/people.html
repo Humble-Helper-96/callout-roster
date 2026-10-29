@@ -1,0 +1,85 @@
+{% extends "admin/_layout.html" %}
+{% from "_macros.html" import csrf, badge, post_button, field %}
+{% block title %}{{ unit.name }} · Admin · People{% endblock %}
+{% block admin_title %}People{% endblock %}
+{% block admin_sub %}Everyone in {{ group_name }}. Tap Edit to set a phone; place them on a team from the Roster tab.{% endblock %}
+{% block admin_content %}
+{% set base = 'u/' ~ unit.slug ~ '/admin/' %}
+
+<div class="callout {% if last_sync and last_sync.error %}danger{% elif sync_configured %}info{% else %}warn{% endif %} small">
+  <span class="callout-icon" aria-hidden="true">{% if last_sync and last_sync.error %}!{% else %}i{% endif %}</span>
+  <div>
+    {% if not sync_configured %}
+      <strong>Authentik sync is off.</strong> People appear here when they first sign in, or add them below.
+    {% elif last_sync and last_sync.error %}
+      <strong>Last sync failed</strong> at {{ last_sync.at|localtime }}: {{ last_sync.error }}
+    {% elif last_sync %}
+      <strong>Synced</strong> {{ last_sync.at|localtime }}: {{ last_sync.people }} people{% if last_sync.deactivated %}, {{ last_sync.deactivated }} left{% endif %}. Every {{ cfg.authentik_sync_minutes }} min.
+      {% for f in last_sync.failed or [] %}<br><strong>Skipped {{ f.group }}:</strong> {{ f.error }}{% endfor %}
+    {% else %}
+      <strong>Authentik sync is configured</strong> but has not run yet.
+    {% endif %}
+  </div>
+  {% if sync_configured %}{{ post_button(rel(base ~ 'people/sync'), 'Sync now', 'btn small') }}{% endif %}
+</div>
+
+{% if people %}
+<div class="search-row">
+  <input class="input" type="search" id="people-search" placeholder="Search name, username or phone" autocomplete="off" autocapitalize="off" aria-label="Search people" aria-controls="people-list">
+  <span class="mono muted" id="people-count" aria-live="polite">{{ people|length }}</span>
+</div>
+<p class="resp-empty muted" id="people-none" hidden>Nobody matches.</p>
+<ul class="resp-list people-list" id="people-list">
+  {% for p in people %}
+  <li class="resp-row person-row{% if not p.active %} quiet{% endif %}" data-person-id="{{ p.id }}" data-name="{{ p.display_name }}" data-username="{{ p.username }}" data-phone-app="{{ p.phone_app }}" data-phone-synced="{{ p.phone }}" data-source="{{ p.source }}" data-active="{{ 1 if p.active else 0 }}" data-seen="{{ p.last_seen_at|localtime }}" data-groups="{{ p.groups or '' }}">
+    <span class="who">
+      <span class="name">{{ p.display_name or p.username }}</span>
+      <span class="person-tags">
+        {% if not p.active %}{{ badge('left group', 'warn') }}{% elif p.id in on_roster %}{{ badge('on roster', 'green') }}{% else %}{{ badge('unplaced', 'accent') }}{% endif %}
+      </span>
+    </span>
+    <span class="state">
+      <span class="slot mono">{{ p.username }}</span>
+      <span class="slot mono phone">{% if p.phone_effective %}{{ p.phone_effective }}{% if p.phone_app and p.phone and p.phone_app != p.phone %} <span class="badge accent" title="Overrides the Authentik number {{ p.phone }}">app</span>{% endif %}{% else %}<span class="muted">no phone</span>{% endif %}</span>
+    </span>
+    <a class="btn small edit-person" href="{{ rel(base ~ 'people', edit=p.id) }}">Edit</a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="callout info"><span class="callout-icon" aria-hidden="true">i</span><div>Nobody yet. Run a sync, have people sign in once, or add them below.</div></div>
+{% endif %}
+
+<details class="fold"{% if open_add %} open{% endif %}>
+  <summary>Add a person by hand</summary>
+  <form method="post" action="{{ rel(base ~ 'people') }}" class="form-card">
+    {{ csrf() }}
+    <p class="small">For someone not yet in Authentik, or when sync is off. The username must match their Authentik login exactly or their status buttons will not appear.</p>
+    {{ field('username', 'Authentik username', placeholder='u10114', required=True, attrs='autocomplete="off"') }}
+    {{ field('display_name', 'Name', placeholder='Last, First') }}
+    {{ field('phone', 'Work phone', placeholder='555-0100', type='tel') }}
+    <div class="form-actions"><button class="btn-primary" type="submit">Add person</button></div>
+  </form>
+</details>
+
+<dialog id="person-sheet" class="sheet" aria-labelledby="person-title"{% if edit_person %} open{% endif %}>
+  <form method="post" action="{{ rel(base ~ 'people/' ~ (edit_person.id if edit_person else 0)) }}" class="sheet-body" id="person-form" data-action-base="{{ rel(base ~ 'people/') }}">
+    {{ csrf() }}
+    <div class="me-head"><span class="field-label">Edit</span><span class="pos" id="person-title">{{ edit_person.display_name if edit_person else '' }}</span></div>
+    <p class="mono small muted" id="person-meta">{% if edit_person %}{{ edit_person.username }} · {{ {'authentik': 'from Authentik', 'header': 'signed in', 'manual': 'added by hand'}[edit_person.source] }} · seen {{ edit_person.last_seen_at|localtime }}{% endif %}</p>
+    <label class="field" id="person-name-field"{% if edit_person and edit_person.source == 'authentik' %} hidden{% endif %}>
+      <span class="field-label">Name</span>
+      <input class="input" name="display_name" id="person-name" value="{{ edit_person.display_name if edit_person else '' }}">
+    </label>
+    <label class="field">
+      <span class="field-label">Work phone</span>
+      <input class="input" name="phone" id="person-phone" type="tel" value="{{ edit_person.phone_app if edit_person else '' }}" placeholder="{{ (edit_person.phone or '555-0100') if edit_person else '555-0100' }}">
+      <span class="field-hint" id="person-phone-hint">{% if edit_person and edit_person.phone %}Authentik has {{ edit_person.phone }}; a number here overrides it, blank goes back to it.{% else %}Used for the Call buttons and the record.{% endif %}</span>
+    </label>
+    <button type="submit" class="btn-primary">Save</button>
+    <button type="submit" class="btn" id="person-revert-btn" name="revert" value="1" formnovalidate{% if not (edit_person and edit_person.phone_app and edit_person.phone and edit_person.phone_app != edit_person.phone) %} hidden{% endif %}>Use Authentik number ({{ edit_person.phone if edit_person else '' }})</button>
+    <button type="submit" class="btn" id="person-active-btn" formaction="{{ rel(base ~ 'people/' ~ (edit_person.id if edit_person else 0) ~ '/active') }}" name="active" value="{{ '0' if (edit_person and edit_person.active) else '1' }}">{{ 'Deactivate' if (edit_person and edit_person.active) else 'Reactivate' }}</button>
+    <button type="button" class="btn sheet-cancel" data-close>Close</button>
+  </form>
+</dialog>
+{% endblock %}

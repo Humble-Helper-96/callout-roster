@@ -1,0 +1,35 @@
+{% extends "admin/_layout.html" %}
+{% from "_macros.html" import csrf, badge, post_button, field %}
+{% block title %}{{ unit.name }} · Admin · {{ row.position }}{% endblock %}
+{% block admin_title %}Edit {{ row.position }}{% endblock %}
+{% block admin_sub %}{{ row.name or 'Vacant' }} · {{ row.team_name or 'Unassigned' }}{% endblock %}
+{% block admin_content %}
+{% set base = 'u/' ~ unit.slug ~ '/admin/' %}
+<form method="post" class="card form-card" action="{{ rel(base ~ 'roster/' ~ row.id) }}">
+  {{ csrf() }}
+  <div class="grid-form">
+    <label class="field"><span class="field-label">Person</span>
+      <select class="input" name="person_id" data-picker>
+        <option value="">— vacant —</option>
+        {% for p in choices %}<option value="{{ p.id }}"{% if p.id == row.person_id %} selected{% endif %}>{{ p.display_name }} ({{ p.username }})</option>{% endfor %}
+      </select>
+      <span class="field-hint">Name and phone come from Authentik.</span></label>
+    <label class="field"><span class="field-label">Team</span>
+      <select class="input" name="team_id"><option value="">Unassigned</option>{% for t in teams %}<option value="{{ t.id }}"{% if t.id == row.team_id %} selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></label>
+    {{ field('position', 'Callsign', row.position, required=True, hint='Entered here only; never taken from Authentik.') }}
+    <label class="field"><span class="field-label">Role</span>
+      <select class="input" name="role_id"><option value="">— none —</option>{% for r in roles %}<option value="{{ r.id }}"{% if r.id == row.role_id %} selected{% endif %}>{{ r.name }}</option>{% endfor %}</select></label>
+    {{ field('sort_order', 'Sort order', row.sort_order, type='number') }}
+  </div>
+  <label class="check"><input type="checkbox" name="active"{% if row.active %} checked{% endif %}> Active (inactive callsigns are hidden from callouts)</label>
+  <div class="form-actions">
+    <button class="btn-primary" type="submit">Save</button>
+    <a class="btn" href="{{ rel(base ~ 'roster') }}">Cancel</a>
+  </div>
+</form>
+<div class="card-actions danger-zone">
+  {{ post_button(rel(base ~ 'roster/' ~ row.id ~ '/vacate'), 'Mark vacant', 'btn', confirm='Take ' ~ (row.name or 'this person') ~ ' off callsign ' ~ row.position ~ ' and keep the slot open?') }}
+  {{ post_button(rel(base ~ 'roster/' ~ row.id ~ '/active'), ('Mark inactive' if row.active else 'Reactivate'), 'btn', fields={'active': ('0' if row.active else '1')}) }}
+  {{ post_button(rel(base ~ 'roster/' ~ row.id ~ '/delete'), 'Remove callsign', 'btn-danger', confirm='Remove callsign ' ~ row.position ~ ' and its response history?') }}
+</div>
+{% endblock %}

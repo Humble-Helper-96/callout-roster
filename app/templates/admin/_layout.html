@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_macros.html" import post_button %}
+{% set nav_active = 'admin' %}
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow">{{ unit.name }} · team building{% if not cfg.admin_password_hash %} · open to all members{% endif %}</p>
+  <h1>{% block admin_title %}Admin{% endblock %}</h1>
+  <p class="subtitle">{% block admin_sub %}{% endblock %}</p>
+</section>
+<nav class="pills" aria-label="Admin sections">
+  {% for tab, label in [('roster', 'Roster'), ('people', 'People'), ('teams', 'Teams & roles')] %}
+  <a class="pill{% if admin_tab == tab %} active{% endif %}" href="{{ rel('u/' ~ unit.slug ~ '/admin/' ~ tab) }}"{% if admin_tab == tab %} aria-current="page"{% endif %}>{{ label }}</a>
+  {% endfor %}
+  {% if cfg.admin_password_hash %}{{ post_button(rel('u/' ~ unit.slug ~ '/admin/lock'), 'Lock', 'btn small') }}{% endif %}
+</nav>
+{% block admin_content %}{% endblock %}
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field %}
+{% block title %}{{ unit.name }} · Admin · Unlock{% endblock %}
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow">{{ unit.name }} · team building</p>
+  <h1>Unlock admin</h1>
+  <p class="subtitle">Roster, People and Teams &amp; roles are locked. Enter the admin password; it stays unlocked on this device for {{ hours }} hours or until you lock it.</p>
+</section>
+{% if error %}<div class="callout danger" role="alert"><span class="callout-icon" aria-hidden="true">!</span><div>{{ error }}</div></div>{% endif %}
+<form method="post" action="{{ rel('u/' ~ unit.slug ~ '/admin/unlock') }}" class="form-card">
+  {{ csrf() }}<input type="hidden" name="next" value="{{ next }}">
+  {{ field('password', 'Admin password', type='password', required=True, attrs='autocomplete="current-password" autofocus') }}
+  <div class="form-actions"><button class="btn-primary" type="submit">Unlock</button></div>
+</form>
+{% endblock %}

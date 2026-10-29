@@ -1,0 +1,250 @@
+/* Callout Roster — app-specific styles. Adds to theme.css, never redefines tokens. */
+
+/* ---- callout cards ----------------------------------------------------- */
+.callout-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:var(--s-4); }
+.card.selected { box-shadow:var(--glow); }
+.after-grid { margin-top:var(--s-3); }
+.count-row { display:flex; flex-wrap:wrap; gap:var(--s-2) var(--s-4); margin:var(--s-2) 0; font-family:var(--mono); font-size:.8rem; letter-spacing:.06em; text-transform:uppercase; }
+.count b { font-family:var(--mono); font-size:1.25rem; letter-spacing:0; font-variant-numeric:tabular-nums; margin-right:var(--s-1); }
+.count b small { font-size:.8rem; color:var(--muted); font-weight:400; }
+.count.green b { color:var(--green); } .count.warn b { color:var(--warn); } .count.accent b { color:var(--accent); } .count.danger b { color:var(--danger); } .count.muted b { color:var(--muted); }
+.count { color:var(--muted); }
+.team-counts { list-style:none; margin:0 0 var(--s-2); padding:0; display:flex; flex-wrap:wrap; gap:var(--s-2); }
+.team-counts li { font-family:var(--mono); font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); border:1px solid var(--border); border-radius:var(--r-sm); padding:3px 8px; display:inline-flex; gap:var(--s-2); align-items:baseline; font-variant-numeric:tabular-nums; }
+.team-counts li b { color:var(--white); }
+
+/* ---- your response ------------------------------------------------------ */
+.me-card { border-color:var(--accent); }
+.me-head { display:flex; flex-wrap:wrap; align-items:center; gap:var(--s-2) var(--s-3); margin-bottom:var(--s-3); }
+.me-head .pos { font-family:var(--mono); font-size:1.1rem; letter-spacing:.08em; color:var(--accent); }
+.me-head .name { font-family:var(--head); font-weight:600; font-size:1.2rem; text-transform:uppercase; letter-spacing:.04em; color:var(--white); }
+.status-buttons { display:grid; grid-template-columns:repeat(3, 1fr); gap:var(--s-2); }
+.status-buttons.five { grid-template-columns:repeat(2, 1fr); }
+.status-buttons.five .status-btn.danger { grid-column:1 / -1; min-height:48px; }
+.status-btn.warn:hover  { border-color:var(--warn);  color:var(--warn); }
+.status-btn.muted:hover { border-color:var(--muted); color:var(--white); }
+.status-btn.current.warn  { background:rgb(244 162 97 / .15); border-color:var(--warn);  color:var(--warn); }
+.status-btn.current.muted { background:rgb(139 148 158 / .15); border-color:var(--muted); color:var(--white); }
+.eta-ask { font-family:var(--head); font-weight:600; font-size:1.1rem; text-transform:uppercase; letter-spacing:.04em; color:var(--white); margin:0 0 var(--s-3); }
+.eta-chips { display:grid; grid-template-columns:repeat(3, 1fr); gap:var(--s-2); }
+.eta-chips .btn { min-height:52px; font-size:1.1rem; }
+.eta-chips .muted-btn { grid-column:1 / -1; color:var(--muted); min-height:44px; }
+.eta-line { font-size:.85rem; letter-spacing:.06em; color:var(--muted); margin:0 0 var(--s-3); }
+.eta-line b { color:var(--accent); }
+.resp-row .eta { color:var(--accent); font-size:.75rem; }
+.status-btn { min-height:56px; background:transparent; border:1px solid var(--border-strong); color:var(--text); padding:10px 8px; font-size:1rem; }
+.status-btn.green:hover  { border-color:var(--green);  color:var(--green); }
+.status-btn.accent:hover { border-color:var(--accent); color:var(--accent); }
+.status-btn.danger:hover { border-color:var(--danger); color:var(--danger); }
+.status-btn.current.green  { background:rgb(63 185 80 / .15);  border-color:var(--green);  color:var(--green); }
+.status-btn.current.accent { background:rgb(0 180 216 / .15);  border-color:var(--accent); color:var(--accent); box-shadow:var(--glow); }
+.status-btn.current.danger { background:rgb(248 81 73 / .15);  border-color:var(--danger); color:var(--danger); }
+@media (max-width:359px) { .status-buttons { grid-template-columns:1fr; } .status-btn { min-height:48px; } }
+
+/* ---- team sections & roster rows --------------------------------------- */
+.team { margin:0 0 var(--s-4); }
+.team-head { position:sticky; top:var(--header-h); z-index:10; display:flex; align-items:center; justify-content:space-between; gap:var(--s-3);
+  background:rgb(17 20 24 / .96); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:var(--r-sm); padding:var(--s-2) var(--s-3); margin:0 0 var(--s-2); font-size:1.1rem; }
+.team-meta { font-family:var(--mono); font-size:.75rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-variant-numeric:tabular-nums; }
+.roster-list { list-style:none; margin:0; padding:0; background:var(--card); border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden; }
+.row { display:grid; grid-template-columns:4.25rem 1fr auto; align-items:center; gap:var(--s-3); padding:var(--s-3) var(--s-4); border-bottom:1px solid var(--border); min-height:60px; }
+.row:last-child { border-bottom:0; }
+.row:hover { background:var(--card-hover); }
+.row:hover .muted, .row:hover .role { color:var(--text); }
+.row.me { background:linear-gradient(90deg, rgb(0 180 216 / .10), transparent 70%); box-shadow:inset 3px 0 0 var(--accent); }
+.row.vacant { opacity:.7; }
+.row .pos { font-family:var(--mono); font-size:1rem; letter-spacing:.06em; color:var(--accent); font-variant-numeric:tabular-nums; }
+.row.vacant .pos { color:var(--muted); }
+.row .who { min-width:0; }
+.row .name { font-family:var(--head); font-weight:600; font-size:1.15rem; letter-spacing:.03em; color:var(--white); text-transform:uppercase; line-height:1.2; overflow-wrap:anywhere; }
+.row .role { font-size:.9rem; color:var(--muted); line-height:1.4; }
+.row .resp { margin-top:var(--s-1); display:flex; align-items:center; gap:var(--s-2); font-size:.8rem; }
+.call { display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:56px; min-height:52px; padding:var(--s-1) var(--s-2); border:1px solid var(--border-strong); border-radius:var(--r-md); color:var(--accent); text-decoration:none; font-family:var(--mono); font-size:.65rem; letter-spacing:.1em; text-transform:uppercase; transition:border-color var(--t-fast), background var(--t-fast); }
+.call:hover { border-color:var(--accent); background:rgb(0 180 216 / .12); color:var(--accent); }
+.call.off { color:var(--border-strong); border-color:var(--border); border-style:dashed; cursor:default; pointer-events:none; }
+
+/* ---- history ------------------------------------------------------------- */
+.card-list { display:grid; gap:var(--s-3); }
+
+/* ---- forms ------------------------------------------------------------------ */
+.form-card { margin:0 0 var(--s-4); }
+.form-actions { display:flex; flex-wrap:wrap; gap:var(--s-2); margin-top:var(--s-3); }
+.two-col { display:grid; grid-template-columns:1fr; gap:var(--s-3); }
+@media (min-width:720px) { .two-col { grid-template-columns:1fr 1fr; } }
+.grid-form { display:grid; grid-template-columns:1fr; gap:0 var(--s-4); }
+@media (min-width:720px) { .grid-form { grid-template-columns:1fr 1fr; } }
+.geo-row { display:flex; align-items:center; gap:var(--s-3); flex-wrap:wrap; margin:0 0 var(--s-3); }
+.loc-fold { background:var(--surface); }
+.loc-fold > summary .mono { font-size:.7rem; letter-spacing:.08em; text-transform:none; font-weight:400; margin-right:auto; margin-left:var(--s-3); }
+.loc-fold > .geo-row { margin-top:var(--s-3); }
+/* Phones: the Start button stays in reach at the bottom of the screen while the form scrolls. */
+@media (max-width:719px) {
+  .sticky-actions { position:sticky; bottom:0; z-index:5; margin:var(--s-3) calc(-1 * var(--s-4)) calc(-1 * var(--s-4)); padding:var(--s-3) var(--s-4) var(--s-4); background:var(--card); border-top:1px solid var(--border); border-radius:0 0 var(--r-md) var(--r-md); }
+  .sticky-actions .btn-primary { flex:1 1 auto; min-height:52px; }
+}
+.radio-set .check { min-height:40px; }
+.inline-form { display:flex; gap:var(--s-2); align-items:center; min-width:220px; }
+.inline-form .input { min-height:40px; padding:6px 10px; }
+.danger-zone { margin-top:var(--s-3); padding-top:var(--s-3); border-top:1px dashed var(--border); }
+.admin-table td { white-space:nowrap; }
+.admin-table tr.inactive td { color:var(--muted); }
+.wrap { overflow-wrap:anywhere; }
+
+/* ---- simplified pages: home, callout, roster ------------------------------ */
+.page-head { padding:var(--s-4) 0 var(--s-3); }
+.page-head h1 { font-size:clamp(1.75rem, 5vw, 2.5rem); }
+.page-head .eyebrow a { color:var(--accent); text-decoration:none; }
+.btn-primary.wide { width:100%; margin:var(--s-4) 0 0; min-height:56px; font-size:1.15rem; }
+.callout-card h3 { margin:var(--s-2) 0 var(--s-1); font-size:1.35rem; }
+.callout-card .card-top .mono.muted { margin-left:auto; }
+.quiet-links { margin:var(--s-5) 0 0; font-family:var(--mono); font-size:.8rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+.quiet-links a { color:var(--muted); } .quiet-links a:hover { color:var(--accent); }
+
+.plain-title { font-size:1.25rem; margin:var(--s-5) 0 var(--s-3); display:flex; align-items:baseline; gap:var(--s-3); }
+.plain-title .mono { font-size:.75rem; letter-spacing:.1em; text-transform:uppercase; }
+.me-card { margin:0 0 var(--s-4); }
+.me-head .field-label { margin-right:auto; }
+
+/* Glance strip: the leader's four numbers, each a filter for the team lists. */
+.glance { display:flex; flex-wrap:wrap; gap:var(--s-2); margin:0 0 var(--s-4); }
+.chip { font-family:var(--mono); font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); background:var(--card); border:1px solid var(--border-strong); border-radius:var(--r-pill); min-height:40px; padding:0 var(--s-3); display:inline-flex; align-items:center; gap:var(--s-1); cursor:pointer; font-variant-numeric:tabular-nums; transition:border-color var(--t-fast), background var(--t-fast); }
+.chip b { font-size:1.1rem; letter-spacing:0; color:var(--white); font-weight:600; }
+.chip.accent b { color:var(--accent); } .chip.green b { color:var(--green); } .chip.danger b { color:var(--danger); }
+.chip:hover { border-color:var(--accent); color:var(--text); }
+.chip.active { border-color:var(--accent); background:rgb(0 180 216 / .12); color:var(--white); box-shadow:var(--glow); }
+.filter-note { margin:calc(-1 * var(--s-2)) 0 var(--s-3); }
+.link-btn { background:none; border:0; padding:0; font:inherit; color:var(--accent); cursor:pointer; text-decoration:underline; min-height:44px; }
+.mark-hint { font-size:.7rem; letter-spacing:.08em; text-transform:none; }
+.resp-row[hidden] { display:none; }
+
+.resp-group { margin:0 0 var(--s-3); }
+.resp-head { position:sticky; top:var(--header-h); z-index:10; display:flex; justify-content:space-between; align-items:center; font-size:.95rem; padding:var(--s-2) var(--s-3); border-radius:var(--r-sm); border:1px solid var(--border); border-left-width:3px; background:var(--surface); margin:0 0 var(--s-1); }
+.resp-head.green { border-left-color:var(--green); } .resp-head.accent { border-left-color:var(--accent); } .resp-head.danger { border-left-color:var(--danger); }
+.resp-head .mono { font-size:.8rem; color:var(--muted); }
+.resp-list { list-style:none; margin:0; padding:0; background:var(--card); border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden; }
+.resp-row { display:grid; grid-template-columns:3.5rem minmax(0,1fr) auto; grid-template-areas:"pos who call" "pos state call"; column-gap:var(--s-3); row-gap:4px; align-items:center; padding:var(--s-2) var(--s-3); min-height:60px; border-bottom:1px solid var(--border); }
+.resp-row:last-child { border-bottom:0; }
+.resp-row.me { box-shadow:inset 3px 0 0 var(--accent); }
+.resp-row .pos { grid-area:pos; font-family:var(--mono); color:var(--accent); letter-spacing:.06em; }
+.resp-row .who { grid-area:who; min-width:0; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,9rem); column-gap:var(--s-2); align-items:baseline; }
+.resp-row .name { font-family:var(--head); font-weight:600; font-size:1.05rem; text-transform:uppercase; letter-spacing:.03em; color:var(--white); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.resp-row .role { font-family:var(--mono); font-size:.65rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:right; }
+/* Fixed slots so the eye always finds the status and the ETA in the same place.
+   When a status was set is kept for the record and the PDF, not shown here. */
+.resp-row .state { grid-area:state; display:grid; grid-template-columns:7.25rem minmax(0,1fr); column-gap:var(--s-2); align-items:center; min-width:0; }
+.resp-row .slot { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:.75rem; letter-spacing:.06em; }
+.resp-row .slot-status .badge { display:block; text-align:center; width:100%; box-sizing:border-box; }
+.resp-row .slot-eta { color:var(--accent); font-variant-numeric:tabular-nums; }
+.resp-row .call { grid-area:call; align-self:center; }
+.resp-row.markable { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; cursor:pointer; transition:background var(--t-fast); }
+.resp-row.markable.pressing { background:rgb(0 180 216 / .12); }
+@media (max-width:379px) { .resp-row .who { grid-template-columns:minmax(0,1fr); } .resp-row .role { display:none; } }
+.call.small { flex-direction:row; min-width:0; min-height:40px; padding:var(--s-1) var(--s-3); }
+.resp-empty { font-size:.9rem; padding:var(--s-1) var(--s-3) var(--s-2); margin:0; }
+
+.fold { border:1px solid var(--border); border-radius:var(--r-md); background:var(--card); margin:0 0 var(--s-3); }
+.fold > summary { cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; min-height:48px; padding:var(--s-2) var(--s-4); font-family:var(--head); font-weight:600; font-size:1rem; text-transform:uppercase; letter-spacing:.06em; color:var(--text); }
+.fold > summary::-webkit-details-marker { display:none; }
+.fold > summary::after { content:"+"; font-family:var(--mono); color:var(--muted); margin-left:var(--s-3); }
+.fold[open] > summary::after { content:"−"; }
+.fold[open] > summary { border-bottom:1px solid var(--border); }
+.fold > :not(summary) { margin:var(--s-3) var(--s-4); }
+.fold .resp-list { margin:var(--s-3); }
+.fold .form-card { padding:0; border:0; background:transparent; }
+
+/* callout page: team lists */
+.resp-row.quiet .name { color:var(--muted); font-weight:500; }
+
+/* tactical brief */
+.brief { margin:0 0 var(--s-4); }
+.brief.editable { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; cursor:pointer; }
+.brief.editable.pressing { background:rgb(0 180 216 / .12); }
+.brief-text { white-space:pre-wrap; margin:0; max-width:none; }
+.brief-text.clamped { display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; }
+.brief-more { display:block; margin:var(--s-2) 0 0; background:none; border:0; padding:0; font-family:var(--mono); font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); cursor:pointer; min-height:32px; }
+.table tr.selected td { box-shadow:inset 3px 0 0 var(--accent); }
+/* Phones: two lines per member, always the same shape, so a thumb learns where things are:
+     callsign | name | Call
+              | status | ETA
+   The status and ETA slots keep their width whether or not they have anything in them. */
+@media (max-width:719px) {
+  .resp-row { grid-template-columns:3rem minmax(0,1fr) auto; grid-template-areas:"pos who call" "state state state"; row-gap:6px; }
+  .resp-row .who { display:flex; align-items:baseline; gap:var(--s-2); }
+  .resp-row .name { flex:0 1 auto; }
+  .resp-row .role { display:none; }
+  .resp-row .state { grid-template-columns:7.25rem minmax(0,1fr); min-height:26px; }
+}
+/* Live updates: what just changed glows briefly, then settles. Nothing moves. */
+@keyframes live-flash { from { box-shadow:inset 0 0 0 2px var(--accent); background-color:rgb(0 180 216 / .18); } }
+.resp-row.changed, .chip.changed, .callout-card.changed { animation:live-flash 1.8s ease-out; }
+.subtitle.changed { animation:none; }
+
+/* Bottom sheets (lead marking, ETA for a member, brief editing). */
+.mark-hint { margin:calc(-1 * var(--s-2)) 0 var(--s-3); }
+/* Sheets sit in the middle of the screen, inside the phone's safe area, on every page and at
+   every size, so they are always in the same place and never under the home indicator or a
+   toolbar. One that is taller than the screen scrolls inside its own box. */
+.sheet { border:1px solid var(--accent); border-radius:var(--r-md); background:var(--card); color:var(--text); padding:0; box-sizing:border-box;
+  width:calc(100% - 2 * var(--s-4)); max-width:600px; margin:auto; box-shadow:var(--shadow-2); overflow-y:auto; -webkit-overflow-scrolling:touch;
+  max-height:calc(100vh - 2 * var(--s-4) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+@supports (height:100dvh) { .sheet { max-height:calc(100dvh - 2 * var(--s-4) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); } }
+.sheet::backdrop { background:rgb(0 0 0 / .6); backdrop-filter:blur(2px); }
+.sheet-body { padding:var(--s-4); display:flex; flex-direction:column; gap:var(--s-3); }
+.sheet-cancel { width:100%; }
+
+/* admin lists (people, roster): same row grammar as the callout page */
+.person-row { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"who edit" "state edit"; }
+.person-row .state { grid-template-columns:7rem minmax(0,1fr); }
+.admin-row .state { grid-template-columns:minmax(0,1fr) 8rem; }
+.person-row .who, .admin-row .who { display:flex; flex-wrap:wrap; align-items:center; gap:var(--s-2); }
+.person-row .name, .admin-row .name { flex:0 1 auto; }
+.person-tags { display:inline-flex; gap:var(--s-1); flex-wrap:wrap; }
+.person-row .edit-person { grid-area:edit; align-self:center; }
+.resp-row .slot.phone { color:var(--text); }
+.admin-row { grid-template-columns:3.5rem minmax(0,1fr) auto; grid-template-areas:"pos who tools" "pos state tools"; }
+.row-tools { grid-area:tools; display:flex; gap:var(--s-1); align-items:center; }
+.row-tools .btn.icon { min-width:40px; padding:4px 8px; min-height:36px; }
+.row-tools .btn.small { min-height:36px; }
+.fold .form-card .field { margin-bottom:var(--s-3); }
+@media (max-width:719px) {
+  .person-row { grid-template-areas:"who edit" "state state"; }
+  .admin-row { grid-template-columns:3.5rem minmax(0,1fr); grid-template-areas:"pos who" "pos state" "tools tools"; }
+  /* Role wraps to a second line rather than being cut to "Assistant Te…"; the phone number keeps its width. */
+  .admin-row .state { grid-template-columns:minmax(0,1fr) max-content; align-items:start; }
+  .admin-row .slot:not(.phone) { white-space:normal; overflow:visible; line-height:1.3; }
+  .row-tools { justify-content:flex-end; margin-top:var(--s-1); }
+}
+
+/* teams & roles: one row per item, same grammar as the roster rows */
+.edit-row { grid-template-columns:minmax(0,1fr) auto auto; grid-template-areas:"form count tools"; }
+.edit-form { grid-area:form; display:flex; gap:var(--s-2); align-items:center; min-width:0; margin:0; }
+.edit-form .input { min-height:40px; padding:6px 10px; flex:1 1 auto; min-width:0; }
+.edit-row > .slot { grid-area:count; font-size:.75rem; letter-spacing:.06em; white-space:nowrap; }
+.edit-row .row-tools { grid-area:tools; }
+.resp-list + .form-card { margin-top:var(--s-3); }
+@media (max-width:719px) {
+  .edit-row { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"form form" "count tools"; }
+  .edit-row .row-tools { margin-top:0; }
+}
+
+/* team colours: --team is set per header from the team's stored colour */
+.team-colored { --team: var(--accent); border-left-color:var(--team) !important; }
+.team-colored > span:first-child { color:var(--team); }
+.resp-head.team-colored { background:linear-gradient(90deg, color-mix(in srgb, var(--team) 14%, var(--surface)), var(--surface) 60%); }
+.swatch { width:44px; height:40px; padding:2px; border:1px solid var(--border-strong); border-radius:var(--r-sm); background:var(--card); cursor:pointer; flex:0 0 44px; }
+
+/* ---- People search ----------------------------------------------------------- */
+.search-row { position:sticky; top:var(--header-h); z-index:10; display:flex; align-items:center; gap:var(--s-3); padding:var(--s-2) 0; margin:0 0 var(--s-2); background:var(--bg); }
+.search-row .input { flex:1 1 auto; min-width:0; }
+.search-row .mono { font-size:.8rem; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.search-row input[type="search"]::-webkit-search-cancel-button { -webkit-appearance:none; appearance:none; }
+
+/* ---- searchable person picker (app.js enhances select[data-picker]) ------ */
+.picker { position:relative; }
+.picker-list { position:absolute; z-index:20; left:0; right:0; top:calc(100% + 4px); margin:0; padding:var(--s-1) 0; list-style:none;
+  max-height:min(50vh, 340px); overflow-y:auto; background:var(--card); border:1px solid var(--border-strong); border-radius:var(--r-md); box-shadow:var(--shadow-2); }
+.picker-list li { padding:10px var(--s-3); min-height:44px; display:flex; align-items:center; cursor:pointer; color:var(--text); }
+.picker-list li.active, .picker-list li:hover { background:var(--card-hover); color:var(--white); box-shadow:inset 3px 0 0 var(--accent); }
+.picker-list li.picker-empty { color:var(--muted); cursor:default; box-shadow:none; background:none; }
+.picker-count { display:block; }

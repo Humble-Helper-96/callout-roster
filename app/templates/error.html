@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ code }} · Callout Roster{% endblock %}
+{% block content %}
+<section class="hero compact">
+  <p class="eyebrow">// ERROR · {{ code }}</p>
+  <h1>{{ name }}</h1>
+  <p class="subtitle">{{ description }}</p>
+</section>
+{% if user %}<p><a class="btn" href="{{ rel('') }}">Back to start</a></p>{% endif %}
+{% endblock %}

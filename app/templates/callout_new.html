@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field %}
+{% block title %}{{ unit.name }} · Open callout{% endblock %}
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow"><a href="{{ rel('u/' ~ unit.slug ~ '/') }}">← Callouts</a></p>
+  <h1>Start a callout</h1>
+  <p class="subtitle">Stays active {{ cfg.callout_duration_hours }} hours unless closed early or extended.</p>
+</section>
+{% if error %}<div class="callout danger" role="alert"><span class="callout-icon" aria-hidden="true">!</span><div>{{ error }}</div></div>{% endif %}
+<form method="post" class="card form-card" action="{{ rel('u/' ~ unit.slug ~ '/callouts/new') }}">
+  {{ csrf() }}
+  {{ field('label', 'Label', form.label, placeholder='e.g. Barricade Elm St', required=True, hint='Short. Members pick a callout by this name.', attrs='maxlength="60" autofocus autocomplete="off"') }}
+
+  <label class="field">
+    <span class="field-label">Tactical brief <span class="muted">(optional)</span></span>
+    <textarea class="input" name="brief" rows="3" maxlength="4000" placeholder="What, where, who is on scene, hazards, staging.">{{ form.brief }}</textarea>
+    <span class="field-hint">Shown at the top of the callout. Hold it there later to edit or add to it.</span>
+  </label>
+
+  {# Folded: the label alone starts a callout; location can be added here or from the callout page later. #}
+  <details class="fold loc-fold"{% if form.coords or form.location_label or error %} open{% endif %}>
+    <summary>Location <span class="mono muted">optional · TAK marker</span></summary>
+    <div class="geo-row">
+      <button type="button" class="btn" id="geo-btn">Use my current location</button>
+      <span class="mono muted" id="geo-status" aria-live="polite"></span>
+    </div>
+    {{ field('coords', 'Coordinates', form.coords, placeholder=coords_example, hint='Latitude, longitude. Copy from CloudTAK and paste as-is.', attrs='inputmode="decimal" id="coords" autocomplete="off"') }}
+    {{ field('location_label', 'Location label', form.location_label, placeholder='e.g. Staging — Civic Center lot', attrs='id="location_label" maxlength="80"') }}
+  </details>
+
+  <div class="form-actions sticky-actions">
+    <button type="submit" class="btn-primary">Start callout</button>
+    <a class="btn" href="{{ rel('u/' ~ unit.slug ~ '/') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

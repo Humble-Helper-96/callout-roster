@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, status_badge, location_meta %}
+{% block title %}{{ unit.name }} · Callouts{% endblock %}
+{% block body_attrs %}{% if opens %} data-live-url="{{ rel('u/' ~ unit.slug ~ '/version') }}" data-live-poll="10" data-version="{{ version }}"{% endif %}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow">{{ unit.name }}</p>
+  <h1>Active callouts</h1>
+</section>
+
+<div data-live="callouts">
+{% if opens %}
+<div class="card-list">
+  {% for c in opens %}{% set k = counts[c.id] %}
+  <a class="card interactive callout-card" href="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ c.id) }}">
+    <div class="card-top">
+      {{ badge('Active', 'green') }}
+      {% if my_status[c.id] %}{{ status_badge(my_status[c.id]) }}{% elif on_roster %}{{ badge('Tap to respond', 'accent') }}{% endif %}
+      <span class="mono muted">auto-closes in {{ c.expires_at|remaining }}</span>
+    </div>
+    <h3>{{ c.label }}</h3>
+    <p class="meta">Opened {{ c.opened_at|localtime }} by {{ c.opened_by }}{% if c.location_label %} · {{ c.location_label }}{% endif %}</p>
+    <div class="count-row">
+      <span class="count accent"><b>{{ k.coming }}<small>/{{ k.active }}</small></b> coming</span>
+      <span class="count green"><b>{{ k.on_scene }}</b> on scene</span>
+      <span class="count danger"><b>{{ k.unavailable }}</b> out</span>
+      <span class="count muted"><b>{{ k.not_contacted }}</b> not contacted</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="callout info"><span class="callout-icon" aria-hidden="true">i</span><div>No active callouts.</div></div>
+{% endif %}
+</div>
+
+{# Below the running callouts: the thing to tap next, always in the same place. #}
+{% if can_manage %}
+<a class="btn-primary wide" href="{{ rel('u/' ~ unit.slug ~ '/callouts/new') }}">Start a callout</a>
+{% endif %}
+
+<p class="quiet-links"><a href="{{ rel('u/' ~ unit.slug ~ '/callouts') }}">Past callouts</a></p>
+{% endblock %}

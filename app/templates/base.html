@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#111418">
+<meta name="referrer" content="same-origin">
+{# Pinned to a phone's home screen it opens full-screen, without the browser bars. #}
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Callout">
+<title>{% block title %}Callout Roster{% endblock %}</title>
+<link rel="manifest" href="{{ rel('static/manifest.webmanifest') }}">
+<link rel="icon" href="{{ rel('static/favicon.svg') }}" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{{ rel('static/icon-180.png') }}">
+<link rel="stylesheet" href="{{ rel('static/fonts.css') }}">
+<link rel="stylesheet" href="{{ rel('static/theme.css') }}">
+<link rel="stylesheet" href="{{ rel('static/app.css') }}">
+</head>
+<body{% block body_attrs %}{% endblock %}>
+<header class="app-header">
+  <div class="header-inner">
+    <a class="brand" href="{{ rel('') }}"><span class="brand-mark" aria-hidden="true"></span><span>Callout Roster</span></a>
+    {% if unit %}<span class="header-unit">{{ unit.name }}</span>{% endif %}
+    <nav class="app-nav" aria-label="Main">
+      {% if unit %}
+        <a class="nav-link{% if nav_active == 'home' %} active{% endif %}" href="{{ rel('u/' ~ unit.slug ~ '/') }}">Callouts</a>
+        <a class="nav-link{% if nav_active == 'admin' %} active{% endif %}" href="{{ rel('u/' ~ unit.slug ~ '/admin/roster') }}">Admin</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+<main class="container" id="main">
+  {% if msg_ok %}<div class="callout success" role="status"><span class="callout-icon" aria-hidden="true">✓</span><div>{{ msg_ok }}</div></div>{% endif %}
+  {% if msg_err %}<div class="callout danger" role="alert"><span class="callout-icon" aria-hidden="true">!</span><div>{{ msg_err }}</div></div>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="app-footer">
+  <div class="container">Callout Roster v{{ APP_VERSION }} · theme v{{ THEME_VERSION }}{% if user %} · {{ user.username }}{% if cfg.auth_mode == 'dev' %} · <span class="warn-text">DEV AUTH</span>{% endif %}{% endif %}</div>
+</footer>
+<script src="{{ rel('static/app.js') }}" defer></script>
+</body>
+</html>

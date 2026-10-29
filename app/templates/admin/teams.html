@@ -1,0 +1,36 @@
+{% extends "admin/_layout.html" %}
+{% from "_macros.html" import csrf, post_button %}
+{% block title %}{{ unit.name }} · Admin · Teams & roles{% endblock %}
+{% block admin_title %}Teams & roles{% endblock %}
+{% block admin_sub %}Team order here is the order on the callout page. Roles are a pick-list you can change at any time.{% endblock %}
+{% block admin_content %}
+{% set base = 'u/' ~ unit.slug ~ '/admin/' %}
+{% macro editable_list(kind, items, counts, noun, colors=False) %}
+{% if items %}
+<ul class="resp-list">
+  {% for it in items %}{% set n = counts.get(it.id, 0) %}
+  <li class="resp-row edit-row">
+    <form method="post" class="edit-form" action="{{ rel(base ~ kind ~ '/' ~ it.id ~ '/rename') }}">{{ csrf() }}{% if colors %}<input type="color" class="swatch" name="color" value="{{ it.color or '#00b4d8' }}" aria-label="{{ it.name }} colour" title="Header colour">{% endif %}<input class="input" name="name" value="{{ it.name }}" aria-label="{{ noun }} name" required><button class="btn small" type="submit">Save</button></form>
+    <span class="slot mono muted">{{ n }} callsign{{ 's' if n != 1 }}</span>
+    <span class="row-tools">
+      {{ post_button(rel(base ~ kind ~ '/' ~ it.id ~ '/move'), '↑', 'btn icon', fields={'dir': 'up'}) }}
+      {{ post_button(rel(base ~ kind ~ '/' ~ it.id ~ '/move'), '↓', 'btn icon', fields={'dir': 'down'}) }}
+      {{ post_button(rel(base ~ kind ~ '/' ~ it.id ~ '/delete'), 'Delete', 'btn-danger small', confirm='Delete ' ~ noun|lower ~ ' ' ~ it.name ~ '?') }}
+    </span>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}<div class="callout info"><span class="callout-icon" aria-hidden="true">i</span><div>None yet.</div></div>{% endif %}
+<form method="post" class="card form-card" action="{{ rel(base ~ kind) }}">
+  {{ csrf() }}
+  <label class="field"><span class="field-label">New {{ noun|lower }}</span><input class="input" name="name" required></label>
+  <div class="form-actions"><button class="btn-primary" type="submit">Add {{ noun|lower }}</button></div>
+</form>
+{% endmacro %}
+
+<h2 class="plain-title">Teams</h2>
+{{ editable_list('teams', teams, team_counts, 'Team', colors=True) }}
+
+<h2 class="plain-title">Roles</h2>
+{{ editable_list('roles', roles, role_counts, 'Role') }}
+{% endblock %}

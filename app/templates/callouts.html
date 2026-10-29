@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}{{ unit.name }} · Past callouts{% endblock %}
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow">{{ unit.name }}</p>
+  <h1>Past callouts</h1>
+</section>
+{% if items %}
+<div class="card-list">
+  {% for c in items %}{% set k = counts[c.id] %}
+  <a class="card interactive callout-card" href="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ c.id) }}">
+    <div class="card-top">
+      {% if c.closed_at %}{{ badge('Expired' if c.close_reason == 'expired' else 'Closed', 'muted') }}{% else %}{{ badge('Active', 'green') }}{% endif %}
+      <span class="mono muted">{{ c.opened_at|localfull }}</span>
+    </div>
+    <h3>{{ c.label }}</h3>
+    <div class="count-row">
+      <span class="count accent"><b>{{ k.coming }}<small>/{{ k.active }}</small></b> coming</span>
+      <span class="count green"><b>{{ k.on_scene }}</b> on scene</span>
+      <span class="count danger"><b>{{ k.unavailable }}</b> out</span>
+      <span class="count muted"><b>{{ k.not_contacted }}</b> not contacted</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="callout info"><span class="callout-icon" aria-hidden="true">i</span><div>No callouts yet for this unit.</div></div>
+{% endif %}
+{% endblock %}

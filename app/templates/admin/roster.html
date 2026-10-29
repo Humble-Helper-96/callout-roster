@@ -1,0 +1,60 @@
+{% extends "admin/_layout.html" %}
+{% from "_macros.html" import csrf, badge, post_button, field %}
+{% block title %}{{ unit.name }} · Admin · Roster{% endblock %}
+{% block admin_title %}Roster{% endblock %}
+{% block admin_sub %}{{ total }} callsign{{ 's' if total != 1 }}. Pick a person, give them a callsign and place them on a team.{% endblock %}
+{% block admin_content %}
+{% set base = 'u/' ~ unit.slug ~ '/admin/' %}
+
+<details class="fold"{% if available %} open{% endif %}>
+  <summary>Add to a team{% if available %} <span class="mono muted">{{ available|length }} unplaced</span>{% endif %}</summary>
+  <form method="post" class="form-card" action="{{ rel(base ~ 'roster') }}">
+    {{ csrf() }}
+    {% if available %}
+    <label class="field"><span class="field-label">Person</span>
+      <select class="input" name="person_id" required data-picker>
+        <option value="">— choose —</option>
+        {% for p in available %}<option value="{{ p.id }}">{{ p.display_name }} ({{ p.username }})</option>{% endfor %}
+      </select></label>
+    <div class="two-col">
+      <label class="field"><span class="field-label">Team</span>
+        <select class="input" name="team_id">{% for t in teams %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}<option value="">Unassigned</option></select></label>
+      {{ field('position', 'Callsign', placeholder='D-14', required=True, hint='Entered here only; never taken from Authentik.') }}
+    </div>
+    <label class="field"><span class="field-label">Role</span>
+      <select class="input" name="role_id"><option value="">— none —</option>{% for r in roles %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}</select></label>
+    <div class="form-actions"><button class="btn-primary" type="submit">Add to team</button></div>
+    {% else %}
+    <p class="small">Everyone in the unit's groups is already placed. New people appear here after a sync or once they sign in for the first time. <a href="{{ rel(base ~ 'people') }}">See people</a>.</p>
+    {% endif %}
+  </form>
+</details>
+
+{% for team, rows in grouped %}
+<section class="team">
+  <h3 class="team-head team-colored"{% if team and team.color %} style="--team:{{ team.color }}"{% endif %}><span>{{ team.name if team else 'Unassigned' }}</span><span class="team-meta">{{ rows|length }}</span></h3>
+  {% if rows %}
+  <ul class="resp-list">
+    {% for r in rows %}
+    <li class="resp-row admin-row{% if not r.active %} quiet{% endif %}" data-roster-id="{{ r.id }}" data-position="{{ r.position }}">
+      <span class="pos">{{ r.position }}</span>
+      <span class="who">
+        <span class="name">{% if r.name %}{{ r.name }}{% else %}<span class="muted">Vacant</span>{% endif %}</span>
+        <span class="person-tags">{% if not r.active %}{{ badge('inactive', 'muted') }}{% endif %}{% if r.person_active == 0 %}{{ badge('left group', 'warn') }}{% endif %}</span>
+      </span>
+      <span class="state">
+        <span class="slot mono">{{ r.role or '' }}</span>
+        <span class="slot mono phone">{{ r.work_phone or '' }}</span>
+      </span>
+      <span class="row-tools">
+        {{ post_button(rel(base ~ 'roster/' ~ r.id ~ '/move'), '↑', 'btn icon', fields={'dir': 'up'}) }}
+        {{ post_button(rel(base ~ 'roster/' ~ r.id ~ '/move'), '↓', 'btn icon', fields={'dir': 'down'}) }}
+        <a class="btn small" href="{{ rel(base ~ 'roster/' ~ r.id) }}">Edit</a>
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<div class="callout info small"><span class="callout-icon" aria-hidden="true">i</span><div>Nobody on this team yet.</div></div>{% endif %}
+</section>
+{% endfor %}
+{% endblock %}

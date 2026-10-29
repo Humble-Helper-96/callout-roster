@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Units · Callout Roster{% endblock %}
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow">Callout Roster</p>
+  <h1>No access</h1>
+</section>
+<div class="callout warn"><span class="callout-icon" aria-hidden="true">!</span><div>Your login (<span class="mono">{{ user.username }}</span>) is not in the <span class="mono">{{ cfg.default_unit_member_group }}</span> group in Authentik. Ask whoever manages groups to add you.</div></div>
+{% endblock %}
