@@ -11,7 +11,7 @@ from dataclasses import dataclass, replace
 
 from werkzeug.security import generate_password_hash
 
-APP_VERSION = "0.5.0"
+APP_VERSION = "0.5.1"
 THEME_VERSION = "1.0"
 
 

@@ -137,8 +137,7 @@ def callout_detail(cid):
         total=counts["total"],
         my_rows=[r for r in rows if _is_me(r)],
         responses=responses,
-        ask_eta=request.args.get("eta") == "me",
-        eta_row=_eta_row_for_marker(rows, responses),
+        eta_row=_eta_row(rows, responses),
         can_mark=not callout["closed_at"],
         can_export=True,
         eta_choices=co.ETA_CHOICES,
@@ -148,8 +147,12 @@ def callout_detail(cid):
     )
 
 
-def _eta_row_for_marker(rows, responses):
-    """?eta=<roster_id>: someone just set that person En route, so ask for their ETA."""
+def _eta_row(rows, responses):
+    """Whose ETA to ask for in the pop-up sheet. ?eta=me: the member just tapped En route
+    on their own card. ?eta=<roster_id>: a lead just set that person En route."""
+    if request.args.get("eta") == "me":
+        mine = [r for r in rows if _is_me(r) and r["id"] in responses and responses[r["id"]]["status"] == "en_route"]
+        return mine[0] if mine else None
     rid = request.args.get("eta", type=int)
     if not rid:
         return None

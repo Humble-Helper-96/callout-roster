@@ -38,16 +38,6 @@
         <span class="pos">{{ r.position }}</span>
         {% if resp %}{{ status_badge(resp.status) }}{% endif %}
       </div>
-      {% if ask_eta and resp and resp.status == 'en_route' %}
-      <form method="post" action="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id ~ '/eta') }}" class="eta-form">
-        {{ csrf() }}<input type="hidden" name="roster_id" value="{{ r.id }}">
-        <p class="eta-ask">You are en route. How long until you arrive?</p>
-        <div class="eta-chips">
-          {% for m in eta_choices %}<button type="submit" name="minutes" value="{{ m }}" class="btn">{{ m }} min</button>{% endfor %}
-          <button type="submit" name="minutes" value="0" class="btn muted-btn">Skip</button>
-        </div>
-      </form>
-      {% else %}
       {% if resp and resp.status == 'en_route' %}
       <p class="eta-line mono">{% if resp.eta_at %}ETA <b>{{ resp.eta_at|localtime }}</b> ({{ resp.eta_at|until }}){% else %}No ETA given{% endif %} · <a href="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id, eta='me') }}">change</a></p>
       {% endif %}
@@ -57,7 +47,6 @@
         <button type="submit" name="status" value="{{ key }}" class="status-btn {{ STATUS_TONES[key] }}{% if resp and resp.status == key %} current{% endif %}" aria-pressed="{{ 'true' if resp and resp.status == key else 'false' }}">{{ label }}</button>
         {% endfor %}
       </form>
-      {% endif %}
     </section>
     {% endfor %}
   {% else %}
@@ -130,8 +119,9 @@
 <dialog id="eta-sheet" class="sheet" aria-labelledby="eta-title" open>
   <form method="post" action="{{ rel('u/' ~ unit.slug ~ '/callouts/' ~ callout.id ~ '/eta') }}" class="sheet-body eta-form">
     {{ csrf() }}<input type="hidden" name="roster_id" value="{{ eta_row.id }}">
-    <div class="me-head"><span class="field-label">ETA for</span><span class="pos" id="eta-title">{{ eta_row.position }} {{ eta_row.name }}</span></div>
-    <p class="eta-ask">En route. How long until they arrive?</p>
+    {% set eta_me = eta_row.tak_username and eta_row.tak_username|lower == user.username|lower %}
+    <div class="me-head"><span class="field-label">{{ 'Your ETA' if eta_me else 'ETA for' }}</span><span class="pos" id="eta-title">{{ eta_row.position }} {{ eta_row.name }}</span></div>
+    <p class="eta-ask">{{ 'You are en route. How long until you arrive?' if eta_me else 'En route. How long until they arrive?' }}</p>
     <div class="eta-chips">
       {% for m in eta_choices %}<button type="submit" name="minutes" value="{{ m }}" class="btn">{{ m }} min</button>{% endfor %}
       <button type="submit" name="minutes" value="0" class="btn muted-btn">Skip</button>
